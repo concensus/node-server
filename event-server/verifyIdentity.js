@@ -10,6 +10,7 @@ module.exports = {
     send: function (req, res) {
         var num = req.params.info.split("@")[0];
         var name = req.params.info.split("@")[1];
+        console.log(req.params.info)
         client.messages.create({
             to: num,
             from: "+15106835584",
