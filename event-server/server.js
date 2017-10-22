@@ -114,7 +114,7 @@ wss.on('connection', ws => {
     ws.send('Connection opened');
 });
 
-let pollInstance;
+var pollInstance;
 
 app.get('/votes', (req, res) => {
     PollContract.at(pollAddress).then(instance => {
