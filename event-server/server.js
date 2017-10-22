@@ -46,7 +46,7 @@ app.get('/votes', (req, res) => {
         }
     });
 });
-app.post('/send/:name', require('./verifyIdentity').send);
+app.post('/send/:info', require('./verifyIdentity').send);
 
 if (subscription){
     subscription.on('data', (result) => {
