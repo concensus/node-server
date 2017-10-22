@@ -1,14 +1,89 @@
 
 
-const app = require('express');
+const app = require('express')();
 
 const Web3 = require('web3');
-const web3 =  new Web3();
+
+const web3Provider = new Web3.providers.HttpProvider('http://localhost:8545')
+const web3 = new Web3(web3Provider);
+
+
+const PollContractABI = require('../solidityFiles/Poll.json');
+const TruffleContract = require('truffle-contract');
+const DEFAULT_GAS = 4000000
+
+let PollContract = TruffleContract(PollContractABI)
+PollContract.setProvider(web3Provider)
+
+console.log(PollContract)
+
+// web3.eth.net.getNetworkType()
+// .then(console.log);
+//
+// web3.eth.net.isListening()
+// .then(console.log)
+
+app.post('/createPoll', (req, res) => {
+  //createPoll("test", "test2", 10, 2, 1, {from: "0xcd15fea156c1c9d10e5b912b86a453d910c25df9"})
+  _logPollInfo("0x34e5a6371897510bc2233114157579d8c1a6eb57")
+  .then((address) => {
+    res.send(address);
+  }).catch(function () {
+     console.log("Promise Rejected1");
+});
+})
+
+function createPoll (title, proposition, endTime, votesRequired, votesAllowed, msgSender)  {
+    console.log(`Create poll: ${title}, ${proposition}, ${endTime}, ${votesRequired}, ${votesAllowed}`)
+    let myInstance;
+    return PollContract.new(title, proposition, endTime, votesRequired, votesAllowed,
+      {from: msgSender, gas: DEFAULT_GAS})
+    .then((instance) => {
+        console.log("Instance Address: " + instance.address)
+        logPollInfo(instance.address);
+        return instance.address;
+    })
+    .catch(function (error) {
+      console.trace("THIS THE ERROR: " + error);
+     console.log("Promise Rejected2");
+   });
+}
+
+ function _logPollInfo (contractAddress) {
+  return PollContract.at(contractAddress)._title.call()
+  .then((title) => {
+    console.log(title)
+    return PollContract.at(contractAddress)._proposition.call()
+  })
+  .then((proposition) => {
+    console.log(proposition);
+    return PollContract.at(contractAddress)._endTime.call()
+  })
+  .then((endTime) => {
+    console.log(endTime)
+    return PollContract.at(contractAddress)._votesRequired.call()
+  })
+  .then((votesRequired) => {
+    console.log(votesRequired)
+    return PollContract.at(contractAddress)._votesAllowed.call()
+  })
+  .then((votesAllowed) => {
+    console.log(votesAllowed)
+  })
+}
+
+
 
 const EventEmitter = require('events');
 const eventEmitter = new EventEmitter();
 
 const options = {};
+
+app.get('/newAccount', (req, res) => {
+  const responseObject = web3.eth.accounts.create()
+  res.send(responseObject)
+});
+
 
 eventEmitter.on('vote', (option, vote) => {
     if (options[option]) {
@@ -31,6 +106,8 @@ wss.on('connection', ws => {
 
 let subscription = '';
 
+
+
 app.get('/votes', (req, res) => {
     subscription = web3.eth.subscribe('logs', {
         address: req.query.address,
@@ -45,9 +122,9 @@ app.get('/votes', (req, res) => {
     });
 });
 
-subscription.on('data', (result) => {
-    eventEmitter.emit('vote', result.option, result.vote);
-});
+// subscription.on('data', (result) => {
+//     eventEmitter.emit('vote', result.option, result.vote);
+// });
 
 app.post('/votes', (req, res) => {
     subscription.unsubscribe((error, success) => {
@@ -76,7 +153,7 @@ app.post('/votes', (req, res) => {
     });
 });
 
-process.on('exit', () =>{ 
+process.on('exit', () =>{
     wss.close();
 });
 
