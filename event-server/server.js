@@ -1,4 +1,5 @@
 
+require("dotenv").config();
 
 const app = require('express')();
 
@@ -123,6 +124,8 @@ app.get('/votes', (req, res) => {
     });
 });
 
+app.post('/send/:number', require('./verifyIdentity').send);
+
 if (pollInstance) {
     let transactions = pollInstance.Voted({fromBlock: "latest"});
     transactions.watch((error, result) => {
@@ -133,12 +136,6 @@ if (pollInstance) {
         }
     });
 };
-
-// if (subscription) {
-//     subscription.on('data', (result) => {
-//         eventEmitter.emit('vote', result.option, result.vote);
-//     });
-// };
 
 app.post('/vote', (err, req, res) => {
     PollContract.at(pollAddress).then(instance => {
