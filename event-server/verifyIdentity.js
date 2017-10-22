@@ -8,7 +8,6 @@ var client = require('twilio')(accountSid, authToken);
 
 module.exports = {
     send: function (req, res) {
-        console.log('heyy')
         var num = req.params.info.split("@")[0];
         var name = req.params.info.split("@")[1];
         client.messages.create({
