@@ -9,7 +9,7 @@ const web3Provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(web3Provider);
 
 
-const PollContractABI = require('../solidityFiles/Poll.json');
+const PollContractABI = require('./solidityFiles/Poll.json');
 const TruffleContract = require('truffle-contract');
 const DEFAULT_GAS = 4000000;
 
