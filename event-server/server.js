@@ -1,6 +1,8 @@
 
+require("dotenv").config();
 
-const app = require('express');
+const express = require('express');
+const app = express();
 
 const Web3 = require('web3');
 const web3 =  new Web3();
@@ -29,7 +31,7 @@ wss.on('connection', ws => {
     ws.send('Connection opened');
 });
 
-let subscription = '';
+var subscription;
 
 app.get('/votes', (req, res) => {
     subscription = web3.eth.subscribe('logs', {
@@ -44,10 +46,13 @@ app.get('/votes', (req, res) => {
         }
     });
 });
+app.post('/send/:number', require('./verifyIdentity').send);
 
-subscription.on('data', (result) => {
-    eventEmitter.emit('vote', result.option, result.vote);
-});
+if (subscription){
+    subscription.on('data', (result) => {
+        eventEmitter.emit('vote', result.option, result.vote);
+    });
+}
 
 app.post('/votes', (req, res) => {
     subscription.unsubscribe((error, success) => {
