@@ -147,7 +147,11 @@ app.post('/vote', (err, req, res) => {
     });
 });
 
-app.delete('/votes', (req, res) => {
+app.delete('/votes', (error, req, res) => {
+     if(error) {
+         console.error(error);
+         res.status(404).end();
+     } else {
         wss.broadcast = () => {
             wss.clients.forEach(client => {
                 if (client.readyState === WebSocket.OPEN) {
@@ -164,7 +168,8 @@ app.delete('/votes', (req, res) => {
             });
         };
         
-        res.send(`Successfully unsubscribed from ${subscription.id}`);
+        res.status(200).send(`Successfully closed poll.`);
+     }
 });
 
 process.on('exit', () =>{
