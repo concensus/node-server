@@ -8,6 +8,13 @@ const Web3 = require('web3');
 const web3Provider = new Web3.providers.HttpProvider('http://localhost:8545')
 const web3 = new Web3(web3Provider);
 
+const bodyParser = require('body-parser');
+
+app.use(bodyParser.json());
+app.use(bodyParser.raw());
+app.use(bodyParser.urlencoded({extended: true}));
+
+const FROM_ACCOUNT = "0xa363810c1eda270f2cb6ed88ddaa6fea5f4116e2"
 
 const PollContractABI = require('./solidityFiles/Poll.json');
 const TruffleContract = require('truffle-contract');
@@ -63,7 +70,7 @@ function _logPollInfo (contractAddress) {
 let pollAddress;
 
 app.post('/createPoll', (req, res) => {
-    createPoll('Boba', 'Should we get boba?', 1508691600, 6, 1, '0xa6da6bc67b3e9d9b2d70f277e43cd9f668c93234')
+    createPoll('Boba', 'Should we get boba?', 1508691600, 6, 1, '0xa363810c1eda270f2cb6ed88ddaa6fea5f4116e2')
     .then((address) => {
         pollAddress = address;
         res.send(address);
@@ -124,7 +131,7 @@ app.get('/votes', (req, res) => {
     });
 });
 
-app.post('/send/:number', require('./verifyIdentity').send);
+app.post('/send/:info', require('./verifyIdentity').send);
 
 if (pollInstance) {
     let transactions = pollInstance.Voted({fromBlock: "latest"});
@@ -137,9 +144,9 @@ if (pollInstance) {
     });
 };
 
-app.post('/vote', (err, req, res) => {
+app.post('/vote', (req, res) => {
     PollContract.at(pollAddress).then(instance => {
-        instance.vote(req.body.voteType, { from: req.body.account, gas: DEFAULT_GAS });
+        instance.vote(req.body.voteType, { from: FROM_ACCOUNT, gas: DEFAULT_GAS });
         res.status(200).send('Successfully voted.');
     }).catch(error => {
         console.error(error);
@@ -147,29 +154,24 @@ app.post('/vote', (err, req, res) => {
     });
 });
 
-app.delete('/votes', (error, req, res) => {
-     if(error) {
-         console.error(error);
-         res.status(404).end();
-     } else {
-        wss.broadcast = () => {
-            wss.clients.forEach(client => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.send(votes);
-                }
-            });
-        };
-        
-        wss.broadcast = () => {
-            wss.clients.forEach(client => {
-                if (client.readyState === WebSocket.OPEN) {
-                    client.close();
-                }
-            });
-        };
-        
-        res.status(200).send(`Successfully closed poll.`);
-     }
+app.delete('/votes', (req, res) => {
+    wss.broadcast = () => {
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(votes);
+            }
+        });
+    };
+    
+    wss.broadcast = () => {
+        wss.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.close();
+            }
+        });
+    };
+    
+    res.status(200).send(`Successfully closed poll.`);
 });
 
 process.on('exit', () =>{

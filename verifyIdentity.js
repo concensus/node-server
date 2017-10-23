@@ -9,7 +9,7 @@ var client = require('twilio')(accountSid, authToken);
 module.exports = {
     send: function (req, res) {
         client.messages.create({
-            to: req.params.number || "4084313552",
+            to: req.params.info.split("@")[0] || "4084313552",
             from: "+15106835584",
             body: `[concensus] Your verification Code is ${randomCode()}`,
         }, function (err, message) {
